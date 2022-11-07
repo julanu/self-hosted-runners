@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    # https://helm.sh/docs/chart_best_practices/labels/
+    app.kubernetes.io/component: deployment
+    # DO NOT edit the instance label, it is used by the runner installer action to find the installed pod.
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/name: {{ .Values.appName }}
+    app.kubernetes.io/version: {{ .Chart.Version | quote }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+  {{- if .Values.annotations }}
+  annotations:
+    {{- toYaml .Values.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      labels:
+        # DO NOT edit the instance label, it is used by the runner installer action to find the installed pod.
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      securityContext:
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+
+      volumes:
+        {{- if .Values.clusterPKI }}
+        - name: trusted-ca
+          configMap:
+            name: trusted-ca
+            items:
+              - key: ca-bundle.crt
+                path: tls-ca-bundle.pem
+        {{- end }}
+      containers:
+        - name: {{ .Release.Name }}
+          imagePullPolicy: Always
+
+          {{- $taggedImage := printf "%s:%s" .Values.runnerImage .Values.runnerTag }}
+          image: {{ $taggedImage }}
+          env:
+            - name: GITHUB_OWNER
+              value: {{ required ".Values.githubOwner must be set." .Values.githubOwner }}
+            - name: GITHUB_REPOSITORY
+              value: {{ .Values.githubRepository }}
+            - name: GITHUB_DOMAIN
+              value: {{ .Values.githubDomain }}
+
+            # The labels must be trimmed. The config script will stop reading labels if it encounters a space.
+            - name: RUNNER_LABELS
+              value: "{{ $taggedImage }},{{- range .Values.runnerLabels }}{{trim .}},{{- end }}"
+
+            {{- if .Values.runnerGroup }}
+            - name: RUNNER_GROUP
+              value: {{ .Values.runnerGroup }}
+            {{- end }}
+
+            # PAT Auth
+            {{- if .Values.githubPat }}
+            - name: GITHUB_PAT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: {{ .Values.secretKey }}
+            {{- end }}
+
+              # Any injected env values from values.yaml will go here
+              {{- range .Values.runnerEnv }}
+            - name: {{ .name }}
+              value: {{ .value }}
+        {{- end }}
+          securityContext:
+          resources:
+            requests:
+              memory: {{ .Values.memoryRequest }}
+              cpu: {{ .Values.cpuRequest }}
+            limits:
+              memory: {{ .Values.memoryLimit }}
+              cpu: {{ .Values.cpuLimit }}
+
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 1
+            exec:
+              command:
+                - pgrep
+                - Runner.Listener
+
+          volumeMounts:
+            {{- if .Values.clusterPKI }}
+            - name: trusted-ca
+              mountPath: /etc/pki/ca-trust/extracted/pem
+              readOnly: true
+            {{- end }}
+      imagePullSecrets:
+        - name: {{ .Values.secretDockerName }}  
