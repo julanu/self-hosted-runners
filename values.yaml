@@ -5,11 +5,12 @@ runnerTag: runner
 
 namespace: self-hosted-runners
 
-# GitHub organization or user. Required.
-# If githubRepository is set, this must be the organization or user who owns that repository.
+# GitHub organization or user. Required. If githubRepository is set, this must be the organization or user who owns that repository.
 githubOwner: "<add_github_org_here>"
+
 # GitHub repository to install runners to. Can be omitted for an organization-level runner.
 githubRepository: ""
+
 # If you're using GitHub Enterprise, enter your company domain here. eg. github.mycompany.com
 githubDomain: ""
 
@@ -27,7 +28,7 @@ secretKey: "github-pat"
 secretDockerName: regcred
 ### End PAT Auth
 
-## Docker CFG
+# Docker CFG
 dockerToken: <add_dockerhub_token_here>
 
 # Pass labels using array syntax, which is curly braces surrounding comma-separated items.
@@ -43,17 +44,15 @@ runnerGroup: "<enter_runner_group_here>"
 #   key: value
 annotations: {}
 
+serviceAccountName: default
 securityContext:
   runAsUser: 1000
 
-# Adjust replicas depending on your resources available,
-# and how many jobs you want to run concurrently.
+# Adjust replicas depending on your resources available, and how many jobs you want to run concurrently.
 replicas: 2 
 
-serviceAccountName: default
 
-# Adjust requests and limits depending on your resources,
-# and how heavyweight your workloads are.
+# Adjust requests and limits depending on your resources, and how heavyweight your workloads are.
 memoryRequest: "128Mi"
 memoryLimit: "200Mi"
 cpuRequest: "300m"
@@ -65,15 +64,7 @@ clusterPKI: false
 
 # You can inject arbitrary environment variables here:
 runnerEnv:
-    # - name: ENV_VAR
-    #   value: env_value
+    - name: ENV_VAR
+      value: env_value
     # or, through the command line:
     # --set runnerEnv[0].name="ENV_VAR" --set runnerEnv[0].value="env_value"
-
-    ## Proxy Configuration Example:
-    # - name: https_proxy
-    #   value: http://proxy.example.com:9000
-    # - name: http_proxy
-    #   value: http://proxy.example.com:9000
-    # - name: no_proxy
-    #   value: localhost

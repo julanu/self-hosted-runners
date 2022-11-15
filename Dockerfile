@@ -8,10 +8,10 @@ RUN dnf -y upgrade --security && \
     dnf clean all
 
 # To run Docker in Docker
-# RUN sudo dnf -y install dnf-plugins-core && \
-#     dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo && \
-#     dnf -y install docker-ce docker-ce-cli containerd.io && \
-#     systemctl start docker
+RUN sudo dnf -y install dnf-plugins-core && \
+    dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo && \
+    dnf -y install docker-ce docker-ce-cli containerd.io
+    # systemctl start docker
 
 # Kubectl & Helm
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl" && \
