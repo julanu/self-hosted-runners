@@ -1,0 +1,4 @@
+apiVersion: v2
+version: 1.0.0
+name: self-hosted-runners
+description: Custom Github Runners based on OpenShift Github Runners Helm Chart

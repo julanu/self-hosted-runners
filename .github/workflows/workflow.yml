@@ -1,0 +1,22 @@
+name: Github Runners CI
+
+on:
+  push:
+
+jobs:
+  build-docker-image:
+    runs-on: [self-hosted, linux, arm64, hosted-sys, sys-runner]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Build and Push the image
+        uses: julanu/composite-actions/docker-build-push@test-release
+        with:
+          registry_user: ${{ secrets.DOCKERID }}
+          registry_pwd: ${{ secrets.DOCKERKEY }}
+          image_name: mjula/images
+          tag: runner
+          dockerfile: ./Dockerfile
+          platforms: linux/arm64
